@@ -5,12 +5,56 @@
  const canvas=document.createElement('canvas'), context=canvas.getContext('2d');
  let recognition=null, active=false, demo=false, restartTimer, clearTimer, demoTimer, failures=0, transcript='', lastText='', generation=0;
  let settleTimer, speaking=false;
+ let audioContext=null, microphoneStream=null, levelTimer, monitorEpoch=0, monitoring=false;
  const pauseMs=1800;
  function endCue(){
   subtitle.replaceChildren();transcript='';lastText='';
   // End the recognition session as well as the visual cue. Old hypotheses
   // cannot leak into the next phrase, even if the service revises word counts.
   if(active&&recognition)recognition.finishCue();
+ }
+ // Detect pauses from local microphone levels, independently of delayed or
+ // missing SpeechRecognition speechend events. Audio is never recorded here.
+ function releaseMonitor(){
+  monitorEpoch++;monitoring=false;clearTimeout(levelTimer);
+  microphoneStream?.getTracks().forEach(track=>track.stop());microphoneStream=null;
+  if(audioContext){audioContext.close().catch(()=>{});audioContext=null;}
+ }
+ async function monitorSilence(){
+  const Context=window.AudioContext||window.webkitAudioContext;
+  if(!Context||typeof navigator==='undefined'||!navigator.mediaDevices?.getUserMedia)return;
+  const epoch=monitorEpoch;
+  const context=new Context();audioContext=context;
+  try{
+   await context.resume();
+   const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+   if(!active||epoch!==monitorEpoch){stream.getTracks().forEach(track=>track.stop());return;}
+   microphoneStream=stream;
+   const source=context.createMediaStreamSource(stream),analyser=context.createAnalyser();
+   analyser.fftSize=2048;source.connect(analyser);
+   const samples=new Float32Array(analyser.fftSize);
+   let quietSince=null, noiseFloor=.002;
+   monitoring=true;clearTimeout(clearTimer);
+   function sample(){
+    if(!active||epoch!==monitorEpoch)return;
+    if(context.state==='running'){
+     analyser.getFloatTimeDomainData(samples);
+     let energy=0;for(const value of samples)energy+=value*value;
+     const rms=Math.sqrt(energy/samples.length),now=performance.now();
+     const threshold=Math.max(.008,Math.min(.025,noiseFloor*3));
+     if(rms>threshold){quietSince=null;}
+     else{
+      noiseFloor=noiseFloor*.98+rms*.02;
+      if(quietSince===null)quietSince=now;
+      if(transcript&&now-quietSince>=pauseMs){speaking=false;endCue();quietSince=now;}
+     }
+    }else quietSince=null;
+    levelTimer=setTimeout(sample,100);
+   }
+   sample();
+  }catch{
+   if(active&&epoch===monitorEpoch)fail('Microphone pause detection could not start. Allow microphone access and try again in Chrome.');
+  }
  }
  function status(message){$('caption-status').textContent=message;}
  function render(text){
@@ -27,9 +71,10 @@
   // not an append-only stream that duplicates corrected words.
   if(text===lastText)return;
   lastText=text;clearTimeout(clearTimer);render(text);
-  if(!active||!speaking)clearTimer=setTimeout(endCue,pauseMs);
+  if(!active||(!monitoring&&!speaking))clearTimer=setTimeout(endCue,pauseMs);
  }
  function stop(){
+  releaseMonitor();
   active=false;demo=false;speaking=false;generation++;clearTimeout(restartTimer);clearTimeout(clearTimer);clearTimeout(demoTimer);clearTimeout(settleTimer);
   if(recognition){recognition.onend=null;recognition.abort();recognition=null;}
   subtitle.replaceChildren();transcript='';lastText='';
@@ -59,7 +104,7 @@
    settleTimer=setTimeout(()=>{if(current()){instance.abort();restart();}},1500);
   };
   instance.onspeechstart=()=>{if(current()&&!closing){speaking=true;clearTimeout(clearTimer);}};
-  instance.onspeechend=()=>{if(current()&&!closing){speaking=false;clearTimeout(clearTimer);clearTimer=setTimeout(endCue,pauseMs);}};
+  instance.onspeechend=()=>{if(current()&&!closing){speaking=false;clearTimeout(clearTimer);if(!monitoring)clearTimer=setTimeout(endCue,pauseMs);}};
   instance.onstart=()=>{if(current())status('Listening. Press C for settings or Escape to stop captions.');};
   instance.onresult=event=>{
    if(!current()||closing)return;
@@ -94,7 +139,7 @@
  function start(){
   stop();if(!Recognition){status('Live recognition is unavailable in this browser. Open this site in Chrome, or use Preview style.');return;}
   active=true;failures=0;$('caption-start').disabled=true;$('caption-stop').disabled=false;
-  status('Requesting microphone access…');panel.close();connect();
+  status('Requesting microphone access…');panel.close();connect();if(active)monitorSilence();
  }
  function preview(){
   stop();demo=true;$('caption-stop').disabled=false;panel.close();
