@@ -9,9 +9,8 @@
  const pauseMs=1800;
  function endCue(){
   subtitle.replaceChildren();transcript='';lastText='';
-  // End the recognition session as well as the visual cue. Old hypotheses
-  // cannot leak into the next phrase, even if the service revises word counts.
-  if(active&&recognition)recognition.finishCue();
+  // A visual phrase boundary must never interrupt audio recognition.
+  if(active&&recognition)recognition.resetCue();
  }
  // Detect pauses from local microphone levels, independently of delayed or
  // missing SpeechRecognition speechend events. Audio is never recorded here.
@@ -84,18 +83,23 @@
  function fail(message){stop();status(message);if(!panel.open)panel.showModal();}
  function connect(){
   if(!active)return;
-  clearTimeout(clearTimer);clearTimeout(settleTimer);clearTimeout(restartTimer);
+  clearTimeout(settleTimer);clearTimeout(restartTimer);
   const token=++generation;speaking=false;
   const instance=new Recognition();recognition=instance;
   const current=()=>active&&token===generation&&recognition===instance;
   instance.continuous=true;instance.interimResults=true;instance.lang=$('caption-language').value;instance.maxAlternatives=1;
   let finalCursor=0, committed=[], closing=false, ended=false, errorCounted=false;
+  let pending=new Map(), boundaries=new Map();
+  instance.resetCue=()=>{
+   committed=[];
+   boundaries=new Map(pending);
+  };
   function restart(){
    if(!current()||ended)return;
    ended=true;recognition=null;clearTimeout(settleTimer);clearTimeout(clearTimer);
    // Invalidate all callbacks from this service instance immediately.
-   generation++;lastText='';
-   restartTimer=setTimeout(connect,failures?Math.min(500*2**failures,4000):150);
+   generation++;
+   restartTimer=setTimeout(connect,failures?Math.min(500*2**failures,4000):0);
   }
   instance.finishCue=()=>{
    if(!current()||closing)return;
@@ -112,10 +116,16 @@
    // Final results are immutable. Consume each only once, keeping a bounded
    // tail rather than reprocessing and relaying out the entire lecture.
    let interim=[];
+   pending=new Map();
    for(let i=finalCursor;i<event.results.length;i++){
     const result=event.results[i];
-    const words=result[0].transcript.trim().split(/\s+/u).filter(Boolean);
-    if(result.isFinal){committed.push(...words);committed=committed.slice(-32);finalCursor=i+1;}
+    const original=result[0].transcript.trim().split(/\s+/u).filter(Boolean);
+    if(!result.isFinal)pending.set(i,original);
+    const boundary=boundaries.get(i);
+    // The service may extend the same interim result across a pause. Hide
+    // its previous words, while accepting new result indices in full.
+    const words=boundary?original.slice(boundary.length):original;
+    if(result.isFinal){committed.push(...words);committed=committed.slice(-32);finalCursor=i+1;boundaries.delete(i);}
     else interim.push(...words);
    }
    const text=[...committed,...interim].slice(-64).join(' ');
@@ -133,7 +143,11 @@
    }
   };
   // Silence is normal during a lecture, not a failure. Restart quietly.
-  instance.onend=()=>{if(current()){subtitle.replaceChildren();transcript='';restart();}};
+  instance.onend=()=>{if(current()){
+   // Keep the last readable caption while the service reconnects.
+   restart();
+   clearTimer=setTimeout(endCue,pauseMs);
+  }};
   try{instance.start();}catch{fail('Could not start speech recognition. Try again in Chrome with microphone access enabled.');}
  }
  function start(){
