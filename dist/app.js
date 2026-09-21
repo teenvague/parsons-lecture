@@ -2,7 +2,7 @@
 'use strict';
 const $=id=>document.getElementById(id), config=window.LECTURE;
 const motion=matchMedia('(prefers-reduced-motion: reduce)');
-let playing=!motion.matches, speed=50, last=0, position=0, cycleHeight=0;
+let playing=false, speed=50, last=0, position=0, cycleHeight=0;
 function validate(){
  if(!config || !Array.isArray(config.rows) || !config.rows.length)throw Error('Add at least one row to content.js.');
  for(const row of config.rows){
