@@ -20,11 +20,11 @@ If the API is unavailable, `dist/arena-snapshot.json` supplies the channel metad
 
 ## Present
 
-The page starts paused. Space starts scrolling at 50 pixels per second and pauses/resumes thereafter. There are no on-screen controls, header, or navigation. Set a different default with `speed` in `dist/content.js`. Manual wheel, touch, or page navigation pauses the motion; press Space to resume. Holding Space does not repeatedly toggle playback.
+The page starts paused. Space starts scrolling at 70 pixels per second and pauses/resumes thereafter. There are no on-screen controls, header, or navigation. Set a different default with `speed` in `dist/content.js`. Manual wheel, touch, or page navigation pauses the motion; press Space to resume. Holding Space does not repeatedly toggle playback.
 
 The field repeats seamlessly using identical copies; duplicate content is hidden from assistive technology. Images retain their dimensions while loading. Background tabs suspend progress to avoid catch-up jumps. Enabling reduced motion also pauses playback. On phones B/C pairs stay together and become proportionally smaller.
 
-For lecture use, test with the actual projector and real image files. At 50 px/s, a 30,000 px composition lasts about 10 minutes before repeating; duration depends on viewport and image ratios. For a longer lecture, add more rows or reduce the speed in `content.js`.
+For lecture use, test with the actual projector and real image files. At 70 px/s, a 30,000 px composition lasts about 7 minutes before repeating; duration depends on viewport and image ratios. For a longer lecture, add more rows or reduce the speed in `content.js`.
 
 ## Files
 
