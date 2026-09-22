@@ -1,6 +1,7 @@
-(() => {
+(async () => {
 'use strict';
-const $=id=>document.getElementById(id), config=window.LECTURE;
+const $=id=>document.getElementById(id);
+let config=window.LECTURE;
 const motion=matchMedia('(prefers-reduced-motion: reduce)');
 let playing=false, speed=50, last=0, position=0, cycleHeight=0;
 function validate(){
@@ -29,7 +30,7 @@ function makeCycle(copy=false){
 }
 function pause(){playing=false;}
 function toggle(){playing=!playing;position=scrollY;last=0;}
-try{validate();speed=Math.min(60,Math.max(4,Number(config.speed)||50));const first=makeCycle();$('wall').append(first,makeCycle(true),makeCycle(true));const measure=()=>{cycleHeight=first.getBoundingClientRect().height;position=scrollY;};new ResizeObserver(measure).observe(first);measure();}catch(e){$('error').hidden=false;$('error').textContent=e.message;playing=false;}
+try{config=await LectureContent.load(config);validate();speed=Math.min(60,Math.max(4,Number(config.speed)||50));const first=makeCycle();$('wall').append(first,makeCycle(true),makeCycle(true));const measure=()=>{cycleHeight=first.getBoundingClientRect().height;position=scrollY;};new ResizeObserver(measure).observe(first);measure();}catch(e){$('error').hidden=false;$('error').textContent=e.message;playing=false;}
 for(const name of ['wheel','touchstart'])addEventListener(name,pause,{passive:true});
 addEventListener('keydown',e=>{
  if(e.target.matches('input,textarea,select,button,[contenteditable]')||e.ctrlKey||e.metaKey||e.altKey)return;

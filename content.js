@@ -1,22 +1,94 @@
-/* Replace the local image paths, alt text, and captions below.
-   A = full-width finished work. Each pair MUST contain one B and one C.
-   C files must have transparent backgrounds (PNG, WebP, or SVG).
-   width/height must match each file, so scrolling stays stable while loading.
-   alignment: top | base. side: left | right (position of B).
-   size: wide | narrow. space: normal | long. edge: left | right | both | inset. */
-window.LECTURE = {
-  speed: 50,
-  rows: [
-    {type:'pair', alignment:'base', side:'left', edge:'left', size:'wide', space:'normal', images:[
-      {type:'B', src:'assets/b01.png', width:1000, height:1250, alt:'Blue typographic poster reading Too much is enough.', caption:'01 / Too much is enough — typographic study · Placeholder'},
-      {type:'C', src:'assets/c01.png', width:600, height:550, alt:'A red italic ampersand on a transparent background.', caption:'02 / Ampersand — loose type · Placeholder'}]},
-    {type:'A', images:[{type:'A',src:'assets/a01.png',width:1800,height:1100,alt:'Vermilion poster reading A question of taste.',caption:'03 / A question of taste — finished poster · Placeholder'}]},
-    {type:'pair', alignment:'top', side:'right', edge:'right', size:'narrow', space:'long', images:[
-      {type:'B',src:'assets/b02.png',width:1200,height:850,alt:'Black type on pale gray reading form follows feeling.',caption:'04 / Form follows feeling — type study · Placeholder'},
-      {type:'C',src:'assets/c02.png',width:650,height:500,alt:'Blue a slash b and a two-way arrow on transparent background.',caption:'05 / Either, or — loose type · Placeholder'}]},
-    {type:'A', images:[{type:'A',src:'assets/a02.png',width:1800,height:1050,alt:'Acid yellow poster reading Make again.',caption:'06 / Make again — finished poster · Placeholder'}]},
-    {type:'pair', alignment:'base', side:'left', size:'narrow', space:'long', images:[
-      {type:'B',src:'assets/b03.png',width:1000,height:1100,alt:'White serif type on black reading Things in progress.',caption:'07 / Things in progress — type study · Placeholder'},
-      {type:'C',src:'assets/c03.png',width:650,height:500,alt:'The word Maybe in black italic type, on transparent background.',caption:'08 / Maybe — unused wordmark · Placeholder'}]}
-  ]
-};
+/* Are.na is the content editor. Reload the page to pick up channel changes. */
+(function (root) {
+  'use strict';
+  const config = {
+    channel: 'cd-lecture-images',
+    speed: 50,
+    repeatMediumImages: true
+  };
+  const compositions = [
+    { alignment: 'base', side: 'left', edge: 'left', size: 'wide', space: 'normal' },
+    { alignment: 'top', side: 'right', edge: 'right', size: 'narrow', space: 'long' },
+    { alignment: 'base', side: 'left', edge: 'both', size: 'narrow', space: 'normal' },
+    { alignment: 'top', side: 'right', edge: 'right', size: 'wide', space: 'long' }
+  ];
+
+  function imageFromBlock(block) {
+    if (block.type !== 'Image' || !block.image) return null;
+    const match = block.title?.match(/^\s*([ABC])\s*[—–:-]\s*(.+)$/iu);
+    if (!match) return null;
+    const type = match[1].toUpperCase();
+    const caption = match[2].trim();
+    const image = block.image;
+    // Original PNGs retain transparency for the loose C graphics.
+    const src = type === 'C' ? image.src : (image.large?.src || image.src);
+    if (!src || !image.width || !image.height) return null;
+    return {
+      id: block.id, type, caption, src,
+      alt: image.alt_text || caption,
+      width: image.width, height: image.height
+    };
+  }
+
+  function compose(blocks, repeatMediumImages = false) {
+    const items = blocks.map(imageFromBlock).filter(Boolean);
+    const available = new Set(items);
+    const medium = items.filter(item => item.type === 'B');
+    const rows = [];
+    let pairIndex = 0, repeatIndex = 0;
+    for (const item of items) {
+      if (!available.has(item)) continue;
+      available.delete(item);
+      if (item.type === 'A') {
+        rows.push({ type: 'A', images: [item] });
+        continue;
+      }
+      const otherType = item.type === 'B' ? 'C' : 'B';
+      let partner = items.find(candidate => available.has(candidate) && candidate.type === otherType);
+      if (!partner && item.type === 'C' && repeatMediumImages && medium.length) {
+        partner = medium[repeatIndex++ % medium.length];
+      }
+      if (!partner) continue;
+      available.delete(partner);
+      const images = item.type === 'B' ? [item, partner] : [partner, item];
+      rows.push({ type: 'pair', ...compositions[pairIndex++ % compositions.length], images });
+    }
+    return rows;
+  }
+
+  async function fetchBlocks(channel, fetcher) {
+    const blocks = [], seen = new Set();
+    let page = 1;
+    while (page !== null) {
+      if (seen.has(page)) throw Error('Are.na returned a repeated page.');
+      seen.add(page);
+      const url = `https://api.are.na/v3/channels/${encodeURIComponent(channel)}/contents?per=100&sort=position_asc&page=${page}`;
+      const response = await fetcher(url, { signal: AbortSignal.timeout(15000) });
+      if (!response.ok) throw Error(`Are.na returned ${response.status}.`);
+      const body = await response.json();
+      if (!Array.isArray(body.data) || !body.meta) throw Error('Unexpected Are.na response.');
+      blocks.push(...body.data);
+      page = body.meta.next_page ?? null;
+    }
+    return blocks;
+  }
+
+  async function load(options = config, fetcher = fetch) {
+    let blocks;
+    try {
+      blocks = await fetchBlocks(options.channel, fetcher);
+    } catch (error) {
+      console.warn('Are.na unavailable; loading the saved channel snapshot.', error);
+      const response = await fetcher('arena-snapshot.json');
+      if (!response.ok) throw Error('Could not load the Are.na channel or its saved copy. Reload to try again.');
+      blocks = await response.json();
+    }
+    const rows = compose(blocks, options.repeatMediumImages);
+    if (!rows.length) throw Error('Add A images or a complete B/C pair to the Are.na channel.');
+    return { ...options, rows };
+  }
+
+  const api = { imageFromBlock, compose, fetchBlocks, load };
+  if (typeof module !== 'undefined') module.exports = api;
+  else { root.LECTURE = config; root.LectureContent = api; }
+})(typeof window !== 'undefined' ? window : this);
