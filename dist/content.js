@@ -22,11 +22,12 @@
 
   function imageFromBlock(block) {
     if (block.type !== 'Image' || !block.image) return null;
-    const title = block.title || '';
+    const rawTitle = block.title || '';
+    const opening = /^\s*A\s+opening(?=\s*(?:[|—–:-]|$))/iu.test(rawTitle);
+    // Normalize the marker before parsing either supported title format.
+    const title = opening ? rawTitle.replace(/^(\s*A)\s+opening/iu, '$1') : rawTitle;
     const fields = title.split('|').map(value => value.trim());
     let type, caption, family = '', character = '', tone = '';
-    const opening = /^A\s+opening$/iu.test(fields[0]);
-    if (opening) fields[0] = 'A';
     if (fields.length >= 5 && /^[ABC]$/iu.test(fields[0])) {
       [type, family, character, tone] = fields;
       caption = fields.slice(4).join(' | ');
