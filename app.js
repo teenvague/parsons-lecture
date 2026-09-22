@@ -23,7 +23,7 @@ function makeCycle(copy=false){
    const figure=document.createElement('figure');figure.className=`type-${item.type}`;
    if(['A','B'].includes(item.type) && item.height>item.width){
     figure.classList.add('portrait');
-    figure.style.setProperty('--portrait-width',`${90*item.width/item.height}vh`);
+    figure.style.setProperty('--portrait-width',`${(item.type==='B'?110:90)*item.width/item.height}vh`);
    }
    const img=document.createElement('img');Object.assign(img,{src:item.src,alt:item.alt,width:item.width,height:item.height,decoding:'async'});
    img.addEventListener('error',()=>{const fallback=document.createElement('div');fallback.className='image-failed';fallback.style.aspectRatio=`${item.width}/${item.height}`;fallback.textContent='Image unavailable';img.replaceWith(fallback);});
