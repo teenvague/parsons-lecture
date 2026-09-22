@@ -6,11 +6,15 @@ A static lecture website with Are.na-managed images. No build tools or API keys 
 
 The source is https://www.are.na/betty-wang/cd-lecture-images. Keep the channel Closed or Public. The site reads all pages of the v3 API in ascending channel position when it loads; refresh to see edits. It does not rearrange content during a talk.
 
-Title each image `A — Caption`, `B — Caption`, or `C — Caption`. The prefix determines size and is removed from the displayed caption. A images are full width. Each B pairs with the next available C (or a C with the next available B), so either order is accepted. Put intended partners next to each other to control pairing. Non-image blocks and images without a valid prefix are omitted.
+Title each image using `A | family | character | tone | Caption`. Any family, character, or tone word is accepted; capitalization and surrounding/repeated spaces are normalized. Only the caption is displayed. Example: `A | sketchbook | drawing | pale | Sketchbook, page 03`.
 
-`dist/content.js` contains the channel slug, speed, and composition patterns. For this initial sample, `repeatMediumImages: true` reuses B images in order when there are extra C graphics. Set it to false when the channel has enough B images; unmatched B/C images are then omitted. Original C image URLs preserve transparent PNGs. Image captions use the block title; descriptions are not displayed.
+A images are full width; B medium images always pair with C graphics. The planner balances B reuse, prefers contrasting family/character/tone and aspect ratios in pairs, then optimizes the circular sequence to separate related families and repeated images. Visual contrast breaks ties. This is a bounded heuristic, not a guarantee of the globally optimal arrangement; separation is limited by the content mix. Upload and manual channel order do not determine presentation order.
 
-Pair layouts alternate top/base alignment, left/right placement, and generous spacing. Base-aligned image bottoms and caption starting lines share grid tracks. Repeated rows use the same composition throughout a talk.
+`dist/content.js` contains the channel, speed, `seed`, and eight composition patterns. The same blocks, tags, and seed produce the same sequence. Change the seed for a different arrangement. Adding images or changing tags can change the sequence. Pair proportions, alignment, edge placement, and spacing vary while preserving B/C roles.
+
+For the initial sample, `repeatMediumImages: true` reuses B images when there are extra C graphics. Set it to false to omit unmatched images. Original C URLs preserve transparent PNGs. Descriptions are not displayed.
+
+Legacy `A — Caption` titles still work. Their caption, stripped of a trailing number and common image extension, acts as a temporary family: Sketchbook1 and Sketchbook2 group together. Explicit pipe-separated tags override this fallback. Non-image blocks and malformed titles are omitted.
 
 If the API is unavailable, `dist/arena-snapshot.json` supplies the channel metadata saved at setup. It still references Are.na-hosted images and requires network access for those images; this is not an offline image archive. A live empty channel does not silently restore old images.
 
