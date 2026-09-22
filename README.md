@@ -1,21 +1,18 @@
 # Parsons — moving wall
 
-A self-contained lecture website: no installation, accounts, remote images, fonts, or build tools required. Open `dist/index.html` in a browser, or serve/upload the contents of `dist` with any static web host. The packaged copy works offline.
+A static lecture website with Are.na-managed images. No build tools or API keys required. Serve/upload the contents of `dist` with a static web host. Are.na content and microphone transcription require network access.
 
-## Replace the work
+## Edit the work in Are.na
 
-Put your image files in `dist/assets/`, then edit `dist/content.js`. Every image has a `type`, `src`, `width`, `height`, `alt`, and `caption`. Dimensions are the file's natural pixel dimensions; they reserve its correct aspect ratio. Images are never cropped. The supplied typographic specimens are placeholders, not claims about your work.
+The source is https://www.are.na/betty-wang/cd-lecture-images. Keep the channel Closed or Public. The site reads all pages of the v3 API in ascending channel position when it loads; refresh to see edits. It does not rearrange content during a talk.
 
-An A row contains exactly one A image and spans the entire viewport width. A pair contains exactly one B and one C; neither can appear alone. C uses a transparent PNG, WebP, or SVG—transparency must be in the actual file. The supplied C PNGs have alpha transparency.
+Title each image `A — Caption`, `B — Caption`, or `C — Caption`. The prefix determines size and is removed from the displayed caption. A images are full width. Each B pairs with the next available C (or a C with the next available B), so either order is accepted. Put intended partners next to each other to control pairing. Non-image blocks and images without a valid prefix are omitted.
 
-Pair options:
-- `alignment`: `top` or `base` (base aligns the image bottoms and starts both captions on the same line, even when one wraps)
-- `side`: `left` or `right` (the position of B)
-- `edge`: `left`, `right`, `both`, or `inset` (images can meet the viewport edges; captions retain a small readable inset)
-- `size`: `wide` or `narrow`
-- `space`: `normal` or `long`
+`dist/content.js` contains the channel slug, speed, and composition patterns. For this initial sample, `repeatMediumImages: true` reuses B images in order when there are extra C graphics. Set it to false when the channel has enough B images; unmatched B/C images are then omitted. Original C image URLs preserve transparent PNGs. Image captions use the block title; descriptions are not displayed.
 
-Reorder or duplicate row objects to compose the lecture. Captions always remain visible. Use short captions for projection. The page validates pairing, captions, alternative text, and dimensions and displays a clear message if content is incomplete.
+Pair layouts alternate top/base alignment, left/right placement, and generous spacing. Base-aligned image bottoms and caption starting lines share grid tracks. Repeated rows use the same composition throughout a talk.
+
+If the API is unavailable, `dist/arena-snapshot.json` supplies the channel metadata saved at setup. It still references Are.na-hosted images and requires network access for those images; this is not an offline image archive. A live empty channel does not silently restore old images.
 
 ## Present
 
@@ -41,6 +38,6 @@ Press **C** to open the hidden subtitle settings, then **Start microphone** and 
 
 **Preview style** runs a short simulated word-by-word passage without accessing the microphone. This tests appearance and pacing, not microphone recognition. Chrome is the recommended first browser to try; support and the browser's recognition service vary. The browser may send audio to its speech provider. This site stores neither audio nor transcript, and no API key is required. The transcript exists only in memory during the recognition session. A gap of 1.8 seconds between accepted words starts a fresh cue. A completed cue clears after 2.2 seconds without new displayed words. No second microphone stream or audio-level detector is used. Caption changes never stop recognition. A lifecycle health check reconnects after missing service events: 15 seconds without results during signaled speech, 30 seconds otherwise, or two seconds after audio capture ends. Transient connection failures retry with capped backoff; permission and missing-microphone errors still require user action. A reconnect may lose speech during the service gap.
 
-Before the lecture, test actual speech on the presentation computer, microphone, browser, and internet connection. The style preview and simulated recognition tests do not establish live recognition accuracy or 45-minute reliability. Content is still local placeholder data; the Are.na connection is reserved for the final content step.
+Before the lecture, test actual speech on the presentation computer, microphone, browser, and internet connection. The style preview and simulated recognition tests do not establish live recognition accuracy or 45-minute reliability. Content is managed in the linked Are.na channel.
 
 Caption implementation: `caption-layout.js` contains the pure reconciliation and two-line presentation engine. `captions.js` owns browser recognition, settings, rendering, and the shared live/preview timer. Final results are consumed once; interim hypotheses are reconciled against the boundary of already accepted words. Service callbacks are guarded by an instance epoch. Automated simulations cover corrections, word-count changes, pauses, late final results, reconnection, stop cleanup, and 5,400 words. These do not establish live microphone reliability.
