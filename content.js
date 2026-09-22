@@ -22,7 +22,10 @@
 
   function imageFromBlock(block) {
     if (block.type !== 'Image' || !block.image) return null;
-    const title = block.title || '';
+    const rawTitle = block.title || '';
+    const opening = /^\s*A\s+opening(?=\s*(?:[|—–:-]|$))/iu.test(rawTitle);
+    // Normalize the marker before parsing either supported title format.
+    const title = opening ? rawTitle.replace(/^(\s*A)\s+opening/iu, '$1') : rawTitle;
     const fields = title.split('|').map(value => value.trim());
     let type, caption, family = '', character = '', tone = '';
     if (fields.length >= 5 && /^[ABC]$/iu.test(fields[0])) {
@@ -45,7 +48,7 @@
     const src = type === 'C' ? image.src : (image.large?.src || image.src);
     if (!caption || !src || !(image.width > 0 && image.height > 0)) return null;
     return {
-      id: block.id, type, caption, family, character, tone, src,
+      id: block.id, type, opening, caption, family, character, tone, src,
       alt: image.alt_text || caption, width: image.width, height: image.height
     };
   }
@@ -77,11 +80,14 @@
       + (different('tone') ? 5 : 0) + Math.min(ratio, 3);
   }
 
-  // Minimize family proximity around the entire loop, then visual repetition.
+  // Minimize family proximity along the finite sequence, then visual repetition.
   // This is a bounded local search, not a claim of a global mathematical optimum.
-  function sequence(rows, random) {
-    const count = rows.length;
-    const order = shuffle(rows, random);
+  function sequence(rows, random, opener) {
+    const order = shuffle(rows.filter(row => row !== opener), random);
+    if (opener) order.unshift(opener);
+    const count = order.length;
+    const firstMovable = opener ? 1 : 0;
+    const movableCount = count - firstMovable;
     const better = (a, b) => a[0] < b[0] - 1e-8 || (Math.abs(a[0] - b[0]) < 1e-8 && a[1] < b[1] - 1e-8);
     function cost(a, b, distance) {
       let family = 0, similarity = a.type === b.type ? 3 : 0;
@@ -97,18 +103,19 @@
       const at = k => order[swapped ? (k === i ? j : k === j ? i : k) : k];
       for (const p of [i, j]) for (let q = 0; q < count; q++) {
         if (q === p || (p === j && q === i)) continue;
-        const distance = Math.min(Math.abs(p - q), count - Math.abs(p - q));
+        const distance = Math.abs(p - q);
         const score = cost(at(p), at(q), distance);
         total[0] += score[0]; total[1] += score[1];
       }
       return total;
     }
     // A fixed seed and ID ordering make upload/reordering irrelevant.
-    for (let pass = 0; pass < 4; pass++) {
+    for (let pass = 0; pass < 4 && movableCount > 1; pass++) {
       let improved = false;
       const attempts = Math.min(count * count, 2000);
       for (let n = 0; n < attempts; n++) {
-        const i = Math.floor(random() * count), j = Math.floor(random() * count);
+        const i = firstMovable + Math.floor(random() * movableCount);
+        const j = firstMovable + Math.floor(random() * movableCount);
         if (i !== j && better(affected(i, j, true), affected(i, j, false))) {
           [order[i], order[j]] = [order[j], order[i]];
           improved = true;
@@ -135,7 +142,11 @@
       uses.set(partner.id, uses.get(partner.id) + 1);
       rows.push({ type: 'pair', images: [partner, graphic] });
     }
-    const ordered = sequence(rows, random);
+    // With multiple marked openers, the lowest block ID wins deterministically.
+    // Otherwise choose a stable A so the page always opens with major work.
+    const opener = rows.find(row => row.type === 'A' && row.images[0].opening)
+      || rows.find(row => row.type === 'A');
+    const ordered = sequence(rows, random, opener);
     let pairIndex = 0;
     return ordered.map(row => row.type === 'A' ? row : {
       ...row, variant: pairIndex % 3, ...compositions[pairIndex++ % compositions.length]
