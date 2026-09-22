@@ -12,14 +12,18 @@
   const style=getComputedStyle(subtitle);context.font=`${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
   return context.measureText(text).width+Math.max(0,text.length-1)*(parseFloat(style.letterSpacing)||0);
  }});
- const status=text=>{$('caption-status').textContent=text;};
+ function status(text = '') {
+  const message = $('caption-status');
+  message.textContent = text;
+  message.hidden = !text;
+ }
  function frame(){engine.tick(performance.now());frameTimer=setTimeout(frame,50);}
  function stop(){
   active=false;previewing=false;epoch++;
   clearTimeout(frameTimer);clearTimeout(retryTimer);clearTimeout(demoTimer);clearTimeout(healthTimer);
   const old=recognition;recognition=null;if(old){old.onend=null;old.abort();}
   engine.reset();$('caption-start').disabled=!Recognition;$('caption-stop').disabled=true;
-  status('Captions off. Press C for settings.');
+  status();
  }
  function fail(text){stop();status(text);if(!panel.open)panel.showModal();}
  function connect() {
@@ -61,11 +65,11 @@
   instance.continuous = true;
   instance.interimResults = true;
   instance.maxAlternatives = 1;
-  instance.lang = $('caption-language').value;
+  instance.lang = 'en-US';
   instance.onstart = () => {
    if (!current()) return;
    deadline = performance.now() + 30000;
-   status('Listening. Words settle briefly before appearing. Escape stops captions.');
+   status();
   };
   instance.onspeechstart = () => {
    if (!current()) return;

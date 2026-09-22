@@ -27,10 +27,8 @@ figcaption{overflow-wrap:anywhere}
 #caption-settings{position:fixed;max-width:min(520px,calc(100vw - 32px));padding:28px;border:1px solid #ccc;background:#fff;color:#181818;font:16px/1.5 Arial,sans-serif}
 #caption-settings::backdrop{background:#0005}
 #caption-settings h2{font-size:22px;font-weight:500;margin:0 0 14px}
-#caption-settings p{margin:14px 0}.caption-note{font-size:13px;color:#555}
-#caption-settings select{font:inherit;padding:5px;margin-left:8px;max-width:100%}
 .caption-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
 .caption-actions button{font:14px Arial;padding:10px 12px;background:white;border:1px solid #aaa;cursor:pointer}
 .caption-actions button:disabled{opacity:.4;cursor:default}
 .caption-actions button:focus-visible{outline:2px solid #204bd6;outline-offset:2px}
-#caption-status{font-size:14px}
+#caption-status{margin:14px 0;font-size:14px}
