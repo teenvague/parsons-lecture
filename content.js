@@ -63,7 +63,7 @@
       if (seen.has(page)) throw Error('Are.na returned a repeated page.');
       seen.add(page);
       const url = `https://api.are.na/v3/channels/${encodeURIComponent(channel)}/contents?per=100&sort=position_asc&page=${page}`;
-      const response = await fetcher(url, { signal: AbortSignal.timeout(15000) });
+      const response = await fetcher(url, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
       if (!response.ok) throw Error(`Are.na returned ${response.status}.`);
       const body = await response.json();
       if (!Array.isArray(body.data) || !body.meta) throw Error('Unexpected Are.na response.');
@@ -79,7 +79,7 @@
       blocks = await fetchBlocks(options.channel, fetcher);
     } catch (error) {
       console.warn('Are.na unavailable; loading the saved channel snapshot.', error);
-      const response = await fetcher('arena-snapshot.json');
+      const response = await fetcher('arena-snapshot.json', { cache: 'no-store' });
       if (!response.ok) throw Error('Could not load the Are.na channel or its saved copy. Reload to try again.');
       blocks = await response.json();
     }
