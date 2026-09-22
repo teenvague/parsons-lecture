@@ -3,7 +3,7 @@
   'use strict';
   const config = {
     channel: 'cd-lecture-images',
-    speed: 50,
+    speed: 70,
     repeatMediumImages: true,
     seed: 1
   };
