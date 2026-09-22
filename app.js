@@ -21,6 +21,10 @@ function makeCycle(copy=false){
   section.className=row.type==='A'?'row major':`row pair proportion-${row.variant ?? 0} ${row.alignment==='top'?'top':'base'} ${row.side==='right'?'right':'left'} ${row.size==='narrow'?'narrow':'wide'} ${row.space==='long'?'long':'normal'} edge-${['left','right','both'].includes(row.edge)?row.edge:'inset'}`;
   row.images.forEach(item=>{
    const figure=document.createElement('figure');figure.className=`type-${item.type}`;
+   if(item.type==='A' && item.height>item.width){
+    figure.classList.add('portrait');
+    figure.style.setProperty('--portrait-width',`${85*item.width/item.height}vh`);
+   }
    const img=document.createElement('img');Object.assign(img,{src:item.src,alt:item.alt,width:item.width,height:item.height,decoding:'async'});
    img.addEventListener('error',()=>{const fallback=document.createElement('div');fallback.className='image-failed';fallback.style.aspectRatio=`${item.width}/${item.height}`;fallback.textContent='Image unavailable';img.replaceWith(fallback);});
    const caption=document.createElement('figcaption');caption.textContent=item.caption;
