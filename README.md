@@ -8,7 +8,9 @@ The source is https://www.are.na/betty-wang/cd-lecture-images. Keep the channel 
 
 Title each image using `A | family | character | tone | Caption`. Any family, character, or tone word is accepted; capitalization and surrounding/repeated spaces are normalized. Only the caption is displayed. Example: `A | sketchbook | drawing | pale | Sketchbook, page 03`.
 
-Portrait A images are centered at a maximum image height of 90vh, with captions aligned to their left edge. Landscape and square A images are full width; B medium images always pair with C graphics. Portrait B images have a 110vh height limit, keeping their natural proportions and the pair’s alignment. The planner balances B reuse, prefers contrasting family/character/tone and aspect ratios in pairs, then optimizes the circular sequence to separate related families and repeated images. Visual contrast breaks ties. This is a bounded heuristic, not a guarantee of the globally optimal arrangement; separation is limited by the content mix. Upload and manual channel order do not determine presentation order.
+Portrait A images are centered at a maximum image height of 90vh, with captions aligned to their left edge. Landscape and square A images are full width; B medium images always pair with C graphics. Portrait B images have a 110vh height limit, keeping their natural proportions and the pair’s alignment. The planner balances B reuse, prefers contrasting family/character/tone and aspect ratios in pairs, then optimizes the finite sequence to separate related families and repeated images. Visual contrast breaks ties. This is a bounded heuristic, not a guarantee of the globally optimal arrangement; separation is limited by the content mix. Upload and manual channel order do not determine presentation order.
+
+To choose the landing image, change exactly one A title to `A opening | family | character | tone | Caption` in Are.na, keeping its existing tags and caption. Refresh the lecture page to see it. The opening marker is not displayed. This A stays first and appears only once; all remaining rows are optimized with the opener included in the contrast/separation scoring. With no marker, the oldest valid A block opens the page; with multiple markers, the marked A with the lowest block ID wins. Only A images can be marked as opening. If there are no A images, the B/C sequence still works.
 
 `dist/content.js` contains the channel, speed, `seed`, and eight composition patterns. The same blocks, tags, and seed produce the same sequence. Change the seed for a different arrangement. Adding images or changing tags can change the sequence. Pair proportions, alignment, edge placement, and spacing vary while preserving B/C roles.
 
@@ -22,16 +24,16 @@ If the API is unavailable, `dist/arena-snapshot.json` supplies the channel metad
 
 The page starts paused. Space starts scrolling at 70 pixels per second and pauses/resumes thereafter. There are no on-screen controls, header, or navigation. Set a different default with `speed` in `dist/content.js`. Manual wheel, touch, or page navigation pauses the motion; press Space to resume. Holding Space does not repeatedly toggle playback.
 
-The field repeats seamlessly using identical copies; duplicate content is hidden from assistive technology. Images retain their dimensions while loading. Background tabs suspend progress to avoid catch-up jumps. Enabling reduced motion also pauses playback. On phones B/C pairs stay together and become proportionally smaller.
+The field plays once and pauses at the bottom. Space at the end does not restart it; scroll back up and press Space to play from that position. Reloading starts paused at the opening image. Images retain their dimensions while loading. Background tabs suspend progress to avoid catch-up jumps. Enabling reduced motion also pauses playback. On phones B/C pairs stay together and become proportionally smaller.
 
-For lecture use, test with the actual projector and real image files. At 70 px/s, a 30,000 px composition lasts about 7 minutes before repeating; duration depends on viewport and image ratios. For a longer lecture, add more rows or reduce the speed in `content.js`.
+For lecture use, test with the actual projector and real image files. At 70 px/s, a 30,000 px composition lasts about 7 minutes before reaching the end; duration depends on viewport and image ratios. For a longer lecture, add more rows or reduce the speed in `content.js`.
 
 ## Files
 
 - `dist/index.html`: page shell
 - `dist/style.css`: spacing, sizes, alignment, responsive layout
 - `dist/content.js`: images, captions, row ordering, default speed
-- `dist/app.js`: validation, rendering, continuous scrolling, keyboard interaction
+- `dist/app.js`: validation, rendering, finite scrolling, keyboard interaction
 - `dist/assets/`: eight original sample typographic images
 
 All supplied placeholder specimens were created for this package and may be replaced or reused. No content from the Loosies reference was copied.

@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 let config=window.LECTURE;
 const motion=matchMedia('(prefers-reduced-motion: reduce)');
-let playing=false, speed=70, last=0, position=0, cycleHeight=0;
+let playing=false, speed=70, last=0, position=0, ready=false;
 function validate(){
  if(!config || !Array.isArray(config.rows) || !config.rows.length)throw Error('Add at least one row to content.js.');
  for(const row of config.rows){
@@ -12,10 +12,9 @@ function validate(){
   for(const i of row.images)if(!i.src||!i.caption?.trim()||!i.alt?.trim()||!(i.width>0&&i.height>0))throw Error('Each image needs a source, caption, alt text, width, and height.');
  }
 }
-function makeCycle(copy=false){
+function makeCycle(){
  const cycle=document.createElement('section');cycle.className='cycle';
- if(copy){cycle.setAttribute('aria-hidden','true');cycle.inert=true;}
- else cycle.setAttribute('aria-label','Lecture works');
+ cycle.setAttribute('aria-label','Lecture works');
  config.rows.forEach(row=>{
   const section=document.createElement('div');
   section.className=row.type==='A'?'row major':`row pair proportion-${row.variant ?? 0} ${row.alignment==='top'?'top':'base'} ${row.side==='right'?'right':'left'} ${row.size==='narrow'?'narrow':'wide'} ${row.space==='long'?'long':'normal'} edge-${['left','right','both'].includes(row.edge)?row.edge:'inset'}`;
@@ -33,8 +32,9 @@ function makeCycle(copy=false){
  });return cycle;
 }
 function pause(){playing=false;}
-function toggle(){playing=!playing;position=scrollY;last=0;}
-try{config=await LectureContent.load(config);validate();speed=Math.min(200,Math.max(4,Number(config.speed)||70));const first=makeCycle();$('wall').append(first,makeCycle(true),makeCycle(true));const measure=()=>{cycleHeight=first.getBoundingClientRect().height;position=scrollY;};new ResizeObserver(measure).observe(first);measure();}catch(e){$('error').hidden=false;$('error').textContent=e.message;playing=false;}
+function toggle(){if(!ready)return;position=scrollY;playing=!playing&&position<maxScroll();last=0;}
+function maxScroll(){return Math.max(0,document.documentElement.scrollHeight-innerHeight);}
+try{config=await LectureContent.load(config);validate();speed=Math.min(200,Math.max(4,Number(config.speed)||70));const first=makeCycle();$('wall').append(first);history.scrollRestoration='manual';scrollTo(0,0);position=0;ready=true;}catch(e){$('error').hidden=false;$('error').textContent=e.message;playing=false;}
 for(const name of ['wheel','touchstart'])addEventListener(name,pause,{passive:true});
 addEventListener('keydown',e=>{
  if(e.target.matches('input,textarea,select,button,[contenteditable]')||e.ctrlKey||e.metaKey||e.altKey)return;
@@ -45,12 +45,11 @@ motion.addEventListener('change',e=>{if(e.matches)pause();});
 document.addEventListener('visibilitychange',()=>{last=0;position=scrollY;});
 function tick(now){
  const dt=last?Math.min((now-last)/1000,.1):0;last=now;
- if(playing&&!document.hidden&&cycleHeight>0){
-  position+=speed*dt;
-  // Jump only between pixel-identical cycles, preserving fractional movement.
-  const start=$('wall').offsetTop;
-  if(position>=start+cycleHeight)position-=cycleHeight;
+ if(playing&&!document.hidden&&ready){
+  const end=maxScroll();
+  position=Math.min(position+speed*dt,end);
   scrollTo(0,position);
+  if(position>=end)pause();
  }else position=scrollY;
  requestAnimationFrame(tick);
 }
