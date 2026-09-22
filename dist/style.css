@@ -43,3 +43,8 @@ figcaption{overflow-wrap:anywhere}
 .major>.portrait{width:min(100%,var(--portrait-width));margin-inline:auto}
 .major>.portrait>img{max-height:90vh}
 .major>.portrait>figcaption{padding:0}
+
+/* Portrait medium works fit the screen without stretching their paired graphic. */
+.pair>.type-B.portrait{width:min(100%,var(--portrait-width))}
+.pair.right>.type-B.portrait{justify-self:end}
+.pair>.type-B.portrait>img{max-height:90vh}
