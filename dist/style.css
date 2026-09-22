@@ -47,4 +47,4 @@ figcaption{overflow-wrap:anywhere}
 /* Portrait medium works fit the screen without stretching their paired graphic. */
 .pair>.type-B.portrait{width:min(100%,var(--portrait-width))}
 .pair.right>.type-B.portrait{justify-self:end}
-.pair>.type-B.portrait>img{max-height:90vh}
+.pair>.type-B.portrait>img{max-height:110vh}
