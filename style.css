@@ -32,3 +32,9 @@ figcaption{overflow-wrap:anywhere}
 .caption-actions button:disabled{opacity:.4;cursor:default}
 .caption-actions button:focus-visible{outline:2px solid #204bd6;outline-offset:2px}
 #caption-status{margin:14px 0;font-size:14px}
+
+/* Alternating pair proportions, while B always remains larger than C. */
+.pair.proportion-1{grid-template-columns:minmax(0,1fr) minmax(0,.32fr);gap:6vw}
+.pair.proportion-1.right{grid-template-columns:minmax(0,.32fr) minmax(0,1fr)}
+.pair.proportion-2{grid-template-columns:minmax(0,1fr) minmax(0,.55fr);gap:12vw}
+.pair.proportion-2.right{grid-template-columns:minmax(0,.55fr) minmax(0,1fr)}
