@@ -8,7 +8,7 @@ function validate(){
  if(!config || !Array.isArray(config.rows) || !config.rows.length)throw Error('Add at least one row to content.js.');
  for(const row of config.rows){
   const kinds=row.images?.map(i=>i.type).sort().join('');
-  if(!((row.type==='A'&&kinds==='A')||(row.type==='pair'&&kinds==='BC')))throw Error('Each row must contain one A, or exactly one B and one C.');
+  if(!((row.type==='A'&&kinds==='A')||(row.type==='pair'&&(kinds==='BC'||(kinds==='BB'&&row.pairing==='BB'&&row.images.some(i=>i.height>i.width)&&row.images.some(i=>i.width>i.height))))))throw Error('Each row must contain one A, one B and one C, or a portrait/landscape B pair.');
   for(const i of row.images)if(!i.src||!i.caption?.trim()||!i.alt?.trim()||!(i.width>0&&i.height>0))throw Error('Each image needs a source, caption, alt text, width, and height.');
  }
 }
@@ -18,9 +18,18 @@ function makeCycle(){
  config.rows.forEach(row=>{
   const section=document.createElement('div');
   section.className=row.type==='A'?'row major':`row pair proportion-${row.variant ?? 0} ${row.alignment==='top'?'top':'base'} ${row.side==='right'?'right':'left'} ${row.size==='narrow'?'narrow':'wide'} ${row.space==='long'?'long':'normal'} edge-${['left','right','both'].includes(row.edge)?row.edge:'inset'}`;
+  if(row.pairing==='BB'){
+   section.className=`row bb ${row.alignment==='top'?'top':'base'} ${row.side==='right'?'right':'left'} ${row.space==='long'?'long':'normal'}`;
+   const fraction=row.portraitFraction;
+   const [portrait,landscape]=row.images;
+   section.style.setProperty('--bb-portrait',fraction+'fr');
+   section.style.setProperty('--bb-landscape',(1-fraction)+'fr');
+   const maxWidth=Math.min(110*portrait.width/portrait.height/fraction,110*landscape.width/landscape.height/(1-fraction));
+   section.style.setProperty('--bb-max-width',maxWidth+'vh');
+  }
   row.images.forEach(item=>{
    const figure=document.createElement('figure');figure.className=`type-${item.type}`;
-   if(['A','B'].includes(item.type) && item.height>item.width){
+   if(row.pairing!=='BB' && ['A','B'].includes(item.type) && item.height>item.width){
     figure.classList.add('portrait');
     figure.style.setProperty('--portrait-width',`${(item.type==='B'?110:90)*item.width/item.height}vh`);
    }

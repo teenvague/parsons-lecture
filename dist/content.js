@@ -156,13 +156,25 @@
       uses.set(partner.id, uses.get(partner.id) + 1);
       rows.push({ type: 'pair', images: [partner, graphic] });
     }
+    // Pair unused Bs only: exactly one portrait and one landscape.
+    // B/C keeps priority, and a B/B pair never introduces a repeated image.
+    const portraits = medium.filter(item => uses.get(item.id) === 0 && item.height > item.width);
+    const landscapes = medium.filter(item => uses.get(item.id) === 0 && item.width > item.height);
+    for (const portrait of portraits) {
+      if (!landscapes.length) break;
+      landscapes.sort((a, b) => contrast(b, portrait) - contrast(a, portrait));
+      const landscape = landscapes.shift();
+      uses.set(portrait.id, 1);
+      uses.set(landscape.id, 1);
+      rows.push({ type: 'pair', pairing: 'BB', images: [portrait, landscape] });
+    }
     // With multiple marked openers, the lowest block ID wins deterministically.
     // Otherwise choose a stable A so the page always opens with major work.
     const opener = rows.find(row => row.type === 'A' && row.images[0].opening)
       || rows.find(row => row.type === 'A');
     const ordered = sequence(rows, random, opener);
     // Select each composition in context, not by its index in a fixed cycle.
-    let previousPair;
+    let previousPair, previousBBAlignment;
     const layouts = compositions.flatMap(pattern =>
       [0, 1, 2].map(variant => ({ ...pattern, variant })));
     return ordered.map((row, index) => {
@@ -175,8 +187,26 @@
           score + (layout[key] === previousPair[key] ?
             ({ side: 6, alignment: 3, variant: 3, size: 2, space: 1, edge: 1 })[key] : 0), 0);
       candidates.sort((a, b) => similarity(a) - similarity(b));
-      previousPair = candidates[0];
-      return { ...row, ...previousPair };
+      let layout = candidates[0];
+      if (row.pairing === 'BB') {
+        // Alternate the shared image edge across BB rows, not caption edges.
+        const alignment = previousBBAlignment === 'base' ? 'top' : 'base';
+        previousBBAlignment = alignment;
+        const [portrait, landscape] = row.images;
+        const pr = portrait.width / portrait.height, lr = landscape.width / landscape.height;
+        // Loosies-inspired column spans: retain unequal natural image heights.
+        const fractions = shuffle([4 / 12, 5 / 12, 6 / 12], random);
+        const score = fraction => {
+          const a = fraction / pr, b = (1 - fraction) / lr;
+          const gap = Math.abs(a - b) / Math.max(a, b);
+          return (gap < .18 ? 10 : 0) + (Math.max(a,b) / Math.min(a,b) > 3 ? 10 : 0)
+            + Math.abs(gap - .35);
+        };
+        fractions.sort((a,b) => score(a) - score(b));
+        layout = { ...layout, alignment, portraitFraction: fractions[0] };
+      }
+      previousPair = layout;
+      return { ...row, ...layout };
     });
   }
 
@@ -208,7 +238,7 @@
       blocks = await response.json();
     }
     const rows = compose(blocks, options.repeatMediumImages, options.seed);
-    if (!rows.length) throw Error('Add A images or a complete B/C pair to the Are.na channel.');
+    if (!rows.length) throw Error('Add A images, a B/C pair, or a portrait/landscape B pair to the Are.na channel.');
     return { ...options, rows };
   }
 
