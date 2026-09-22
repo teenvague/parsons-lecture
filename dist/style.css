@@ -41,5 +41,5 @@ figcaption{overflow-wrap:anywhere}
 
 /* Portrait A works retain their proportions within the presentation screen. */
 .major>.portrait{width:min(100%,var(--portrait-width));margin-inline:auto}
-.major>.portrait>img{max-height:85vh}
+.major>.portrait>img{max-height:90vh}
 .major>.portrait>figcaption{padding:0}
