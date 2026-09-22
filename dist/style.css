@@ -38,3 +38,8 @@ figcaption{overflow-wrap:anywhere}
 .pair.proportion-1.right{grid-template-columns:minmax(0,.32fr) minmax(0,1fr)}
 .pair.proportion-2{grid-template-columns:minmax(0,1fr) minmax(0,.55fr);gap:12vw}
 .pair.proportion-2.right{grid-template-columns:minmax(0,.55fr) minmax(0,1fr)}
+
+/* Portrait A works retain their proportions within the presentation screen. */
+.major>.portrait{width:min(100%,var(--portrait-width));margin-inline:auto}
+.major>.portrait>img{max-height:85vh}
+.major>.portrait>figcaption{padding:0}
