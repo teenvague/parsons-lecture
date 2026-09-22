@@ -21,7 +21,7 @@ function makeCycle(copy=false){
   section.className=row.type==='A'?'row major':`row pair proportion-${row.variant ?? 0} ${row.alignment==='top'?'top':'base'} ${row.side==='right'?'right':'left'} ${row.size==='narrow'?'narrow':'wide'} ${row.space==='long'?'long':'normal'} edge-${['left','right','both'].includes(row.edge)?row.edge:'inset'}`;
   row.images.forEach(item=>{
    const figure=document.createElement('figure');figure.className=`type-${item.type}`;
-   if(item.type==='A' && item.height>item.width){
+   if(['A','B'].includes(item.type) && item.height>item.width){
     figure.classList.add('portrait');
     figure.style.setProperty('--portrait-width',`${90*item.width/item.height}vh`);
    }
