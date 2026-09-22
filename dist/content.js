@@ -80,11 +80,25 @@
       + (different('tone') ? 5 : 0) + Math.min(ratio, 3);
   }
 
-  // Minimize family proximity along the finite sequence, then visual repetition.
+  // Establish spatial rhythm first. With an A opener, each A supplies one
+  // following gap. Spread pairs evenly across those gaps; surplus pairs form
+  // the shortest possible balanced runs. No image is dropped or added.
+  function rhythm(rows, random, opener) {
+    const majors = shuffle(rows.filter(row => row.type === 'A' && row !== opener), random);
+    if (opener) majors.unshift(opener);
+    const pairs = shuffle(rows.filter(row => row.type === 'pair'), random);
+    if (!majors.length) return pairs;
+    const gaps = Array.from({ length: majors.length }, () => []);
+    pairs.forEach((row, i) => {
+      gaps[Math.floor((i + 0.5) * majors.length / pairs.length)].push(row);
+    });
+    return majors.flatMap((row, i) => [row, ...gaps[i]]);
+  }
+
+  // Minimize family proximity within the fixed spatial rhythm, then repetition.
   // This is a bounded local search, not a claim of a global mathematical optimum.
   function sequence(rows, random, opener) {
-    const order = shuffle(rows.filter(row => row !== opener), random);
-    if (opener) order.unshift(opener);
+    const order = rhythm(rows, random, opener);
     const count = order.length;
     const firstMovable = opener ? 1 : 0;
     const movableCount = count - firstMovable;
@@ -116,7 +130,7 @@
       for (let n = 0; n < attempts; n++) {
         const i = firstMovable + Math.floor(random() * movableCount);
         const j = firstMovable + Math.floor(random() * movableCount);
-        if (i !== j && better(affected(i, j, true), affected(i, j, false))) {
+        if (i !== j && order[i].type === order[j].type && better(affected(i, j, true), affected(i, j, false))) {
           [order[i], order[j]] = [order[j], order[i]];
           improved = true;
         }
@@ -147,9 +161,22 @@
     const opener = rows.find(row => row.type === 'A' && row.images[0].opening)
       || rows.find(row => row.type === 'A');
     const ordered = sequence(rows, random, opener);
-    let pairIndex = 0;
-    return ordered.map(row => row.type === 'A' ? row : {
-      ...row, variant: pairIndex % 3, ...compositions[pairIndex++ % compositions.length]
+    // Select each composition in context, not by its index in a fixed cycle.
+    let previousPair;
+    const layouts = compositions.flatMap(pattern =>
+      [0, 1, 2].map(variant => ({ ...pattern, variant })));
+    return ordered.map((row, index) => {
+      if (row.type === 'A') return row;
+      const adjacent = index > 0 && ordered[index - 1].type === 'pair';
+      const candidates = shuffle(layouts, random).filter(layout =>
+        !adjacent || layout.side !== previousPair.side);
+      const similarity = layout => !previousPair ? 0 :
+        ['side', 'alignment', 'variant', 'size', 'space', 'edge'].reduce((score, key) =>
+          score + (layout[key] === previousPair[key] ?
+            ({ side: 6, alignment: 3, variant: 3, size: 2, space: 1, edge: 1 })[key] : 0), 0);
+      candidates.sort((a, b) => similarity(a) - similarity(b));
+      previousPair = candidates[0];
+      return { ...row, ...previousPair };
     });
   }
 
