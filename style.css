@@ -50,7 +50,7 @@ figcaption{overflow-wrap:anywhere}
 .pair>.type-B.portrait>img{max-height:110vh}
 
 /* Portrait/landscape B pairs share image edges, with no horizontal gutter. */
-.bb{display:grid;grid-template-columns:minmax(0,var(--bb-portrait)) minmax(0,var(--bb-landscape));column-gap:0;width:min(100%,var(--bb-max-width));margin-inline:auto;align-items:start}
+.bb{display:grid;grid-template-columns:minmax(0,var(--bb-portrait)) minmax(0,var(--bb-landscape));column-gap:0;width:100%;margin-inline:0;padding-inline:0;align-items:start}
 .bb.right{grid-template-columns:minmax(0,var(--bb-landscape)) minmax(0,var(--bb-portrait))}
 .bb>figure:first-child{grid-column:1;grid-row:1}
 .bb>figure:last-child{grid-column:2;grid-row:1}
