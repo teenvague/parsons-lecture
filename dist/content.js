@@ -80,29 +80,57 @@
       + (different('tone') ? 5 : 0) + Math.min(ratio, 3);
   }
 
-  // Establish spatial rhythm first. With an A opener, each A supplies one
-  // following gap. Spread pairs evenly across those gaps; surplus pairs form
-  // the shortest possible balanced runs. No image is dropped or added.
+  // Establish spatial rhythm without dropping images: separate paired rows,
+  // and use pairs and opposite-orientation As to break up dominant orientations.
   function rhythm(rows, random, opener) {
-    const majors = shuffle(rows.filter(row => row.type === 'A' && row !== opener), random);
-    if (opener) majors.unshift(opener);
-    const pairs = shuffle(rows.filter(row => row.type === 'pair'), random);
-    if (!majors.length) return pairs;
-    const gaps = Array.from({ length: majors.length }, () => []);
-    pairs.forEach((row, i) => {
-      gaps[Math.floor((i + 0.5) * majors.length / pairs.length)].push(row);
-    });
-    return majors.flatMap((row, i) => [row, ...gaps[i]]);
+    const buckets = { H: [], V: [], S: [], pair: [] };
+    for (const row of shuffle(rows.filter(row => row !== opener), random)) {
+      const image = row.images[0];
+      const key = row.type === 'pair' ? 'pair' : image.width > image.height ? 'H' : image.width < image.height ? 'V' : 'S';
+      buckets[key].push(row);
+    }
+    const majorCount = buckets.H.length + buckets.V.length + buckets.S.length + (opener ? 1 : 0);
+    if (buckets.pair.length >= majorCount) {
+      const majors = shuffle([...buckets.H, ...buckets.V, ...buckets.S], random);
+      if (opener) majors.unshift(opener);
+      if (!majors.length) return buckets.pair;
+      const gaps = Array.from({ length: majors.length }, () => []);
+      buckets.pair.forEach((row,i) => gaps[Math.floor((i+.5)*majors.length/buckets.pair.length)].push(row));
+      return majors.flatMap((row,i) => [row,...gaps[i]]);
+    }
+    const order = opener ? [opener] : [];
+    let previous = opener ? (opener.images[0].width > opener.images[0].height ? 'H' : opener.images[0].width < opener.images[0].height ? 'V' : 'S') : null;
+    while (Object.values(buckets).some(bucket => bucket.length)) {
+      const candidates = Object.keys(buckets).filter(key => buckets[key].length);
+      const penalty = key => [
+        previous === 'pair' && key === 'pair' ? 1 : 0,
+        previous && previous !== 'pair' && key !== 'pair' && !((previous === 'H' && key === 'V') || (previous === 'V' && key === 'H')) ? 1 : 0
+      ];
+      candidates.sort((a,b) => penalty(a)[0] - penalty(b)[0] || penalty(a)[1] - penalty(b)[1] || buckets[b].length - buckets[a].length);
+      previous = candidates[0];
+      order.push(buckets[previous].pop());
+    }
+    return order;
   }
 
-  // Minimize family proximity within the fixed spatial rhythm, then repetition.
+  // Prioritize pair separation and alternating A orientations, then family separation.
+  // Allow row slots to move so paired rows can separate same-orientation As.
   // This is a bounded local search, not a claim of a global mathematical optimum.
   function sequence(rows, random, opener) {
     const order = rhythm(rows, random, opener);
     const count = order.length;
     const firstMovable = opener ? 1 : 0;
     const movableCount = count - firstMovable;
-    const better = (a, b) => a[0] < b[0] - 1e-8 || (Math.abs(a[0] - b[0]) < 1e-8 && a[1] < b[1] - 1e-8);
+    const better = (a, b) => {
+      for (let k = 0; k < a.length; k++) {
+        if (Math.abs(a[k] - b[k]) > 1e-8) return a[k] < b[k];
+      }
+      return false;
+    };
+    const orientation = row => {
+      const image = row.images[0];
+      return Math.sign(image.width - image.height);
+    };
     function cost(a, b, distance) {
       let family = 0, similarity = a.type === b.type ? 3 : 0;
       for (const x of a.images) for (const y of b.images) {
@@ -110,27 +138,32 @@
         if (x.character && x.character === y.character) similarity += 2;
         if (x.tone && x.tone === y.tone) similarity++;
       }
-      return [family / distance ** 2, distance === 1 ? similarity : 0];
+      const adjacent = distance === 1;
+      // First separate paired rows; then alternate horizontal/vertical As.
+      // Squares are neither orientation and cannot satisfy an H/V transition.
+      const pairedNeighbors = adjacent && a.type === 'pair' && b.type === 'pair' ? 1 : 0;
+      const majorClash = adjacent && a.type === 'A' && b.type === 'A'
+        && orientation(a) * orientation(b) !== -1 ? 1 : 0;
+      return [pairedNeighbors, majorClash, family / distance ** 2, adjacent ? similarity : 0];
     }
     function affected(i, j, swapped) {
-      const total = [0, 0];
+      const total = [0, 0, 0, 0];
       const at = k => order[swapped ? (k === i ? j : k === j ? i : k) : k];
       for (const p of [i, j]) for (let q = 0; q < count; q++) {
         if (q === p || (p === j && q === i)) continue;
         const distance = Math.abs(p - q);
         const score = cost(at(p), at(q), distance);
-        total[0] += score[0]; total[1] += score[1];
+        for (let k = 0; k < total.length; k++) total[k] += score[k];
       }
       return total;
     }
     // A fixed seed and ID ordering make upload/reordering irrelevant.
-    for (let pass = 0; pass < 4 && movableCount > 1; pass++) {
+    for (let pass = 0; pass < 8 && movableCount > 1; pass++) {
       let improved = false;
-      const attempts = Math.min(count * count, 2000);
-      for (let n = 0; n < attempts; n++) {
-        const i = firstMovable + Math.floor(random() * movableCount);
-        const j = firstMovable + Math.floor(random() * movableCount);
-        if (i !== j && order[i].type === order[j].type && better(affected(i, j, true), affected(i, j, false))) {
+      const indices = shuffle(Array.from({ length: movableCount }, (_, k) => firstMovable + k), random);
+      for (let left = 0; left < indices.length; left++) for (let right = left + 1; right < indices.length; right++) {
+        const i = indices[left], j = indices[right];
+        if (i !== j && better(affected(i, j, true), affected(i, j, false))) {
           [order[i], order[j]] = [order[j], order[i]];
           improved = true;
         }
