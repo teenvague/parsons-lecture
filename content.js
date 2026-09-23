@@ -150,8 +150,16 @@
     for (const graphic of small) {
       const candidates = medium.filter(item => repeatMediumImages || uses.get(item.id) === 0);
       if (!candidates.length) continue;
-      // Balance repeat counts before choosing the strongest contrasting partner.
-      candidates.sort((a, b) => uses.get(a.id) - uses.get(b.id) || contrast(b, graphic) - contrast(a, graphic));
+      // Use every available B before repeats. Squares need a C partner;
+      // then draw from the more numerous orientation to preserve B/B matches.
+      const unused = medium.filter(item => uses.get(item.id) === 0);
+      const portraitCount = unused.filter(item => item.height > item.width).length;
+      const landscapeCount = unused.filter(item => item.width > item.height).length;
+      const priority = item => item.width === item.height ? 2
+        : item.height > item.width ? (portraitCount > landscapeCount ? 1 : 0)
+        : (landscapeCount > portraitCount ? 1 : 0);
+      candidates.sort((a, b) => uses.get(a.id) - uses.get(b.id)
+        || priority(b) - priority(a) || contrast(b, graphic) - contrast(a, graphic));
       const partner = candidates[0];
       uses.set(partner.id, uses.get(partner.id) + 1);
       rows.push({ type: 'pair', images: [partner, graphic] });
