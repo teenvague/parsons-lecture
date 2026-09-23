@@ -21,11 +21,8 @@ function makeCycle(){
   if(row.pairing==='BB'){
    section.className=`row bb ${row.alignment==='top'?'top':'base'} ${row.side==='right'?'right':'left'} ${row.space==='long'?'long':'normal'}`;
    const fraction=row.portraitFraction;
-   const [portrait,landscape]=row.images;
    section.style.setProperty('--bb-portrait',fraction+'fr');
    section.style.setProperty('--bb-landscape',(1-fraction)+'fr');
-   const maxWidth=Math.min(110*portrait.width/portrait.height/fraction,110*landscape.width/landscape.height/(1-fraction));
-   section.style.setProperty('--bb-max-width',maxWidth+'vh');
   }
   row.images.forEach(item=>{
    const figure=document.createElement('figure');figure.className=`type-${item.type}`;
