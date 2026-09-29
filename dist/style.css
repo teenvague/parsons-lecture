@@ -1,67 +1,350 @@
-*{box-sizing:border-box}html{scroll-behavior:auto;overflow-anchor:none}body{margin:0;background:#fff;color:#181818;font-family:Arial,Helvetica,sans-serif}header{display:flex;justify-content:space-between;gap:20px;padding:25px 28px;font-size:12px;letter-spacing:.065em;line-height:1.5}#wall{overflow:hidden}.cycle{padding-top:80px;display:flow-root}.row{margin:0 0 80px}.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.44fr);gap:9vw;padding:0 7vw}.pair.base{align-items:end}.pair.top{align-items:start}.pair.right{grid-template-columns:minmax(0,.44fr) minmax(0,1fr)}.pair.right .type-B{grid-column:2;grid-row:1}.pair.right .type-C{grid-column:1;grid-row:1}.pair.narrow{padding-left:14vw;padding-right:10vw;gap:14vw}.pair.long{margin-top:110px;margin-bottom:110px}figure{margin:0;min-width:0}img{display:block;width:100%;height:auto}figcaption{font-family:Arial,Helvetica,sans-serif;font-size:14pt;line-height:1;letter-spacing:.03em;margin-top:12px;color:#444}.type-C img{object-fit:contain}.major figcaption{padding:0 20px}.major img{width:100%}.image-failed{min-height:180px;border:1px solid #ddd;display:grid;place-items:center;font-size:14px;color:#666}[hidden]{display:none!important}#error{padding:30px;color:#a00}@media(max-width:650px){header{padding:18px 16px;font-size:10px}.cycle{padding-top:45px}.pair{padding:0 5vw;gap:7vw;grid-template-columns:minmax(0,1fr) minmax(0,.4fr)}.pair.narrow{padding:0 8vw;gap:9vw}.pair.right{grid-template-columns:minmax(0,.4fr) minmax(0,1fr)}.row{margin-bottom:47.5px}.pair.long{margin-top:60px;margin-bottom:60px}figcaption{font-size:14pt}.major figcaption{padding:0 16px}}
-
-figcaption{overflow-wrap:anywhere}
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: auto;
+  overflow-anchor: none;
+}
+body {
+  margin: 0;
+  background: #fff;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+#wall {
+  overflow: hidden;
+}
+.cycle {
+  padding-top: 80px;
+  display: flow-root;
+}
+.row {
+  margin: 0 0 80px;
+}
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.44fr);
+  gap: 9vw;
+  padding: 0 7vw;
+}
+.pair.top {
+  align-items: start;
+}
+.pair.right {
+  grid-template-columns: minmax(0, 0.44fr) minmax(0, 1fr);
+}
+.pair.right .type-B {
+  grid-column: 2;
+  grid-row: 1;
+}
+.pair.right .type-C {
+  grid-column: 1;
+  grid-row: 1;
+}
+.pair.narrow {
+  padding-left: 14vw;
+  padding-right: 10vw;
+  gap: 14vw;
+}
+.pair.long {
+  margin-top: 110px;
+  margin-bottom: 110px;
+}
+figure {
+  margin: 0;
+  min-width: 0;
+}
+img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+figcaption {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14pt;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  margin-top: 12px;
+  color: #444;
+  overflow-wrap: anywhere;
+}
+.type-C img {
+  object-fit: contain;
+}
+.major figcaption {
+  padding: 0 20px;
+}
+.image-failed {
+  min-height: 180px;
+  border: 1px solid #ddd;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  color: #666;
+}
+[hidden] {
+  display: none !important;
+}
+#error {
+  padding: 30px;
+  color: #a00;
+}
+@media (max-width: 650px) {
+  .cycle {
+    padding-top: 45px;
+  }
+  .pair {
+    padding: 0 5vw;
+    gap: 7vw;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.4fr);
+  }
+  .pair.narrow {
+    padding: 0 8vw;
+    gap: 9vw;
+  }
+  .pair.right {
+    grid-template-columns: minmax(0, 0.4fr) minmax(0, 1fr);
+  }
+  .row {
+    margin-bottom: 47.5px;
+  }
+  .pair.long {
+    margin-top: 60px;
+    margin-bottom: 60px;
+  }
+  .major figcaption {
+    padding: 0 16px;
+  }
+}
 
 /* Edge placement is independent of pair size and vertical alignment. */
-.pair.edge-left{padding-left:0}
-.pair.edge-right{padding-right:0}
-.pair.edge-both{padding-left:0;padding-right:0}
-.pair.edge-left>figure:first-child figcaption,
-.pair.edge-both>figure figcaption{padding-left:16px;padding-right:16px}
-.pair.edge-right>figure figcaption{padding-right:16px}
-.pair.edge-right.right>.type-C figcaption{padding-right:0}
-@media(min-width:651px){
- .pair.edge-left>figure:first-child figcaption,
- .pair.edge-both>figure figcaption{padding-left:20px;padding-right:20px}
- .pair.edge-right>figure figcaption{padding-right:20px}
+.pair.edge-left {
+  padding-left: 0;
 }
-/* Shared image and caption tracks keep both baselines independent of wrapping. */
-.pair.base{grid-template-rows:auto auto;row-gap:12px;align-items:stretch}
-.pair.base>figure{display:grid;grid-template-rows:subgrid;grid-row:1 / 3;row-gap:12px}
-.pair.base>figure>img,.pair.base>figure>.image-failed{align-self:end}
-.pair.base>figure>figcaption{align-self:start;margin-top:0}
-.pair.base.right>.type-B,.pair.base.right>.type-C{grid-row:1 / 3}
+.pair.edge-right {
+  padding-right: 0;
+}
+.pair.edge-both {
+  padding-left: 0;
+  padding-right: 0;
+}
+.pair.edge-left > figure:first-child figcaption,
+.pair.edge-both > figure figcaption {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.pair.edge-right > figure figcaption {
+  padding-right: 16px;
+}
+.pair.edge-right.right > .type-C figcaption {
+  padding-right: 0;
+}
+@media (min-width: 651px) {
+  .pair.edge-left > figure:first-child figcaption,
+  .pair.edge-both > figure figcaption {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .pair.edge-right > figure figcaption {
+    padding-right: 20px;
+  }
+}
 
-#subtitles{position:fixed;z-index:20;bottom:max(7vh,24px);left:50%;transform:translateX(-50%);width:min(84vw,1100px);text-align:center;pointer-events:none;color:#FFF600;font:500 clamp(21px,2.5vw,43px)/1.3 Arial,Helvetica,sans-serif;letter-spacing:0.01em;-webkit-text-stroke:1px #000;paint-order:stroke fill;text-shadow:0 1px 2px rgba(0,0,0,.4)}
-.subtitle-line{display:table;margin:0 auto;padding:0 .15em;background:transparent;box-decoration-break:clone}
-#caption-settings{position:fixed;max-width:min(520px,calc(100vw - 32px));padding:28px;border:1px solid #ccc;background:#fff;color:#181818;font:16px/1.5 Arial,sans-serif}
-#caption-settings::backdrop{background:#0005}
-#caption-settings h2{font-size:22px;font-weight:500;margin:0 0 14px}
-.caption-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
-.caption-actions button{font:14px Arial;padding:10px 12px;background:white;border:1px solid #aaa;cursor:pointer}
-.caption-actions button:disabled{opacity:.4;cursor:default}
-.caption-actions button:focus-visible{outline:2px solid #204bd6;outline-offset:2px}
-#caption-status{margin:14px 0;font-size:14px}
+#subtitles {
+  position: fixed;
+  z-index: 20;
+  bottom: max(7vh, 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(84vw, 1100px);
+  text-align: center;
+  pointer-events: none;
+  color: #fff600;
+  font:
+    500 clamp(21px, 2.5vw, 43px)/1.3 Arial,
+    Helvetica,
+    sans-serif;
+  letter-spacing: 0.01em;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.subtitle-line {
+  display: table;
+  margin: 0 auto;
+  padding: 0 0.15em;
+  background: transparent;
+  box-decoration-break: clone;
+}
+#caption-settings {
+  position: fixed;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 28px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #181818;
+  font:
+    16px/1.5 Arial,
+    sans-serif;
+}
+#caption-settings::backdrop {
+  background: #0005;
+}
+#caption-settings h2 {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 14px;
+}
+.caption-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.caption-actions button {
+  font: 14px Arial;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #aaa;
+  cursor: pointer;
+}
+.caption-actions button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.caption-actions button:focus-visible {
+  outline: 2px solid #204bd6;
+  outline-offset: 2px;
+}
+#caption-status {
+  margin: 14px 0;
+  font-size: 14px;
+}
 
 /* Alternating pair proportions, while B always remains larger than C. */
-.pair.proportion-1{grid-template-columns:minmax(0,1fr) minmax(0,.32fr);gap:6vw}
-.pair.proportion-1.right{grid-template-columns:minmax(0,.32fr) minmax(0,1fr)}
-.pair.proportion-2{grid-template-columns:minmax(0,1fr) minmax(0,.55fr);gap:12vw}
-.pair.proportion-2.right{grid-template-columns:minmax(0,.55fr) minmax(0,1fr)}
+.pair.proportion-1 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.32fr);
+  gap: 6vw;
+}
+.pair.proportion-1.right {
+  grid-template-columns: minmax(0, 0.32fr) minmax(0, 1fr);
+}
+.pair.proportion-2 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.55fr);
+  gap: 12vw;
+}
+.pair.proportion-2.right {
+  grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
+}
 
 /* Portrait A works retain their proportions within the presentation screen. */
-.major>.portrait{width:min(100%,var(--portrait-width));margin-inline:auto}
-.major>.portrait>img{max-height:90vh}
-.major>.portrait>figcaption{padding:0}
+.major > .portrait {
+  width: min(100%, var(--portrait-width));
+  margin-inline: auto;
+}
+.major > .portrait > img {
+  max-height: 90vh;
+}
+.major > .portrait > figcaption {
+  padding: 0;
+}
 
 /* Portrait medium works fit the screen without stretching their paired graphic. */
-.pair>.type-B.portrait{width:min(100%,var(--portrait-width))}
-.pair.right>.type-B.portrait{justify-self:end}
-.pair>.type-B.portrait>img{max-height:110vh}
+.pair > .type-B.portrait {
+  width: min(100%, var(--portrait-width));
+}
+.pair.right > .type-B.portrait {
+  justify-self: end;
+}
+.pair > .type-B.portrait > img {
+  max-height: 110vh;
+}
 
 /* Portrait/landscape B pairs share image edges, with no horizontal gutter. */
-.bb{display:grid;grid-template-columns:minmax(0,var(--bb-portrait)) minmax(0,var(--bb-landscape));column-gap:0;width:100%;margin-inline:0;padding-inline:0;align-items:start}
-.bb.right{grid-template-columns:minmax(0,var(--bb-landscape)) minmax(0,var(--bb-portrait))}
-.bb>figure:first-child{grid-column:1;grid-row:1}
-.bb>figure:last-child{grid-column:2;grid-row:1}
-.bb.right>figure:first-child{grid-column:2}
-.bb.right>figure:last-child{grid-column:1}
-.bb img{width:100%;height:auto}
-.bb figcaption{padding-inline:16px}
-.bb.base{grid-template-rows:auto auto;row-gap:12px;align-items:stretch}
-.bb.base>figure{display:grid;grid-template-rows:subgrid;grid-row:1 / 3;row-gap:12px}
-.bb.base>figure>img,.bb.base>figure>.image-failed{align-self:end}
-.bb.base figcaption{margin-top:0;align-self:start}
-.bb.long{margin-top:110px;margin-bottom:110px}
-@media(min-width:651px){.bb figcaption{padding-inline:20px}}
-@media(max-width:650px){.bb.long{margin-top:60px;margin-bottom:60px}}
+.bb {
+  display: grid;
+  grid-template-columns: minmax(0, var(--bb-portrait)) minmax(
+      0,
+      var(--bb-landscape)
+    );
+  column-gap: 0;
+  width: 100%;
+  margin-inline: 0;
+  padding-inline: 0;
+  align-items: start;
+}
+.bb.right {
+  grid-template-columns: minmax(0, var(--bb-landscape)) minmax(
+      0,
+      var(--bb-portrait)
+    );
+}
+.bb > figure:first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+.bb > figure:last-child {
+  grid-column: 2;
+  grid-row: 1;
+}
+.bb.right > figure:first-child {
+  grid-column: 2;
+}
+.bb.right > figure:last-child {
+  grid-column: 1;
+}
+
+.bb figcaption {
+  padding-inline: 16px;
+}
+
+.bb.long {
+  margin-top: 110px;
+  margin-bottom: 110px;
+}
+@media (min-width: 651px) {
+  .bb figcaption {
+    padding-inline: 20px;
+  }
+}
+@media (max-width: 650px) {
+  .bb.long {
+    margin-top: 60px;
+    margin-bottom: 60px;
+  }
+}
+
+/* Shared image and caption tracks keep image baselines independent of wrapping. */
+.pair.base,
+.bb.base {
+  grid-template-rows: auto auto;
+  align-items: stretch;
+}
+.pair.base > figure,
+.bb.base > figure {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: 1 / 3;
+  row-gap: 12px;
+}
+.pair.base > figure > img,
+.pair.base > figure > .image-failed,
+.bb.base > figure > img,
+.bb.base > figure > .image-failed {
+  align-self: end;
+}
+.pair.base > figure > figcaption,
+.bb.base > figure > figcaption {
+  align-self: start;
+  margin-top: 0;
+}
+.pair.base.right > .type-B,
+.pair.base.right > .type-C {
+  grid-row: 1 / 3;
+}
+
+/* Variant 1/2 retain their composition gaps; the default uses caption spacing. */
+.pair.base.proportion-0,
+.bb.base {
+  row-gap: 12px;
+}
