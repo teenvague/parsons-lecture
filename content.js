@@ -88,7 +88,7 @@
       family = normalize(family);
       character = normalize(character);
       tone = normalize(tone);
-      if (!family || !character || !tone) return null;
+      // Empty category fields remain neutral while labels are being completed.
     } else {
       const match = title.match(/^\s*([ABC])\s*[—–:-]\s*(.+)$/iu);
       if (!match) return null;
@@ -224,7 +224,7 @@
     return order;
   }
 
-  // Prioritize pair separation and alternating A orientations, then family separation.
+  // Prioritize pair separation, A orientation, A color alternation, then family separation.
   // Allow row slots to move so paired rows can separate same-orientation As.
   // This is a bounded local search, not a claim of a global mathematical optimum.
   function sequence(rows, random, opener) {
@@ -266,13 +266,25 @@
       return [
         pairedNeighbors,
         majorClash,
+        0, // Color alternation is scored across the A sequence, below.
         family / distance ** 2,
         adjacent ? similarity : 0,
       ];
     }
     function affected(i, j, swapped) {
-      const total = [0, 0, 0, 0];
+      const total = [0, 0, 0, 0, 0];
       const at = (k) => order[swapped ? (k === i ? j : k === j ? i : k) : k];
+      // Compare successive labeled As, including across paired or unlabeled rows.
+      // Unknown tones are neutral; they neither count as a color nor reset it.
+      let previousTone;
+      for (let k = 0; k < count; k++) {
+        const row = at(k);
+        if (row.type !== "A") continue;
+        const tone = row.images[0].tone;
+        if (tone !== "bw" && tone !== "color") continue;
+        if (tone === previousTone) total[2]++;
+        previousTone = tone;
+      }
       for (const p of [i, j])
         for (let q = 0; q < count; q++) {
           if (q === p || (p === j && q === i)) continue;
